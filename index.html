@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>絶対に勝てないNim（クソゲー）</title>
+<script src="js/jquery-2.1.3.min.js"></script>
+<link rel="stylesheet" href="css/sample.css">
+<link rel="shortcut icon" href="img/nim.png">
+</head>
+<body>
+<header>
+<h1>絶対に勝てないNim</h1>
+</header>
+<main>
+    <h2>説明</h2>
+    <ul>
+        <li>CSSやJQueryでページをデザインする部分が苦手だったため、前回まではそちらに重点を置いて課題をやっていましたが、今回は中１日で時間がなかったこともあり、得意分野のアルゴリズムで何かやることをテーマとして課題に取り組みました。</li>
+        <li>そのため、UI的な部分の実装は最低限にとどめています。</li>
+        <li>作成したのは、コンピュータと<a href="https://ja.wikipedia.org/wiki/%E3%83%8B%E3%83%A0">Nim</a>を行って遊ぶサイトです。友達がおらず、遊び相手がいなくて困っている<b><u>加藤のような引きこもり野郎</u></b>に最適な娯楽サイトです。</li>
+        <li>Nimのルール（後述します）は単純で、よく知られた必勝法が存在しますが、必勝法をきちんと理解しようとするとそれなりに複雑で、数学的には興味深いゲームです。</li>
+        <li>今回はコンピュータとNimで遊べるロジックを実装し、さらにコンピュータが必ず勝つように手を選択してくるアルゴリズムを実装しました。</li>
+        <li>知っているアルゴリズムを実装するだけでそんなに難しくないと思っていましたが、不正な入力に対してエラーを出すよう条件分岐を細かく設定したら結構時間がかかってしまいました。</li>
+        <li>状態の保存にはLocal Storageを用いましたが、更新時にはデータ消去しているため、配列でも実現できる程度のものになってしまったので、もう少しLocal Storageの特性を活かしたアイデアを考えたかったです。</li>
+    </ul>
+    <h2 class="rule">ルール</h2>
+    <ul>
+        <li>コンピュータとNimで勝負をします。</li>
+        <li>プレイヤーは最初にNimの初期状態の山の大きさを指定してください。</li>
+        <li>プレイヤーとコンピュータのどちらが先手を取るかは<u>コンピュータが選択します（これによりどうやってもプレイヤーは勝てない）</u>。</li>
+        <li>プレイヤーは自分の番になったら数字が0以上の山を1つ選択し、その山の数字を好きなだけ減らしてください。ただし1つも減らさないという選択はできず、減らした結果その山の数字がマイナスになるような指定もしてはいけません。</li>
+        <li>プレイヤーとコンピュータは交互に手番を繰り返し、先に操作を行えなくなった方の負けです。</li>
+    </ul>
+
+    <h2>遊ぶ</h2>
+    <div id ="play">
+        <div id="direction"><p>1個目の山の大きさを指定してください。</p></div>
+        <input type="text" id="memo">
+        <div id="direction2"></div>
+        <div id="select">
+            <p id="save">入力した大きさの山を作成する</p>
+            <p id="clear">クリア</p>
+            <p id="start">ゲームスタート</p>
+        </div>
+    </div>
+</main>
+<table id="list">
+<!-- ここに追加データが挿入される -->
+</table>
+<script>
+    localStorage.clear(); //localStorageは更新時にクリア
+    let total=0; //石の数の合計
+
+    // nimのgrundy数を計算
+    function nim() {
+        let grundy=0;
+        for (let i = 0; i < localStorage.length; i++) {
+            const key=(i+1)+"個目の山";
+            const value = localStorage.getItem(key);
+            grundy^=value;
+        };
+        return grundy;
+    };
+
+    //submit時の処理
+    function submit() {
+        //データの取得
+        let idx = $("#d1").val();
+        let dec = $("#d2").val();
+        const key=idx+"個目の山";
+        if (Number.isInteger(Number(idx)) && Number(idx)>=1 && Number(idx)<=localStorage.length && document.getElementById("value"+idx).innerHTML>0 && Number.isInteger(Number(dec)) && Number(dec)>=1 && Number(dec)<=localStorage.getItem(key) && Number(dec)>0 && Number(dec)<=document.getElementById("value"+idx).innerHTML) {
+            //フォームをクリア
+            let textForm = document.getElementById("d1");
+            textForm.value = '';
+            let textForm2 = document.getElementById("d2");
+            textForm2.value = '';
+            //データの書き換え
+            document.getElementById("value"+idx).innerHTML-=dec;
+            total-=dec;
+            localStorage.setItem(idx+"個目の山", document.getElementById("value"+idx).innerHTML);
+            $("#direction").html("<p>あなたは"+idx+"個目の山を"+dec+"減らしました。</p>");
+            if (total==0) {
+                $("#direction").append("<p>すべての山の数字が0になったため、あなたの勝ちです。</p>");
+                document.getElementById("direction2").innerHTML='';
+                $("#submit").remove();
+            } else {
+                computer();
+                if (total==0) {
+                    $("#direction").append("<p>すべての山の数字が0になったため、あなたの負けです。</p>");
+                    document.getElementById("direction2").innerHTML='';
+                    $("#submit").remove();
+                } 
+                else {
+                    $("#direction").append("<p>あなたの番です。</p>");
+                };
+            };
+        } else 
+        if (Number.isInteger(Number(idx))==false) {
+            $("#direction").html("<p>山の指定は数字を入力してください。</p>");
+        } else
+        if (Number(idx)<1 || Number(idx)>localStorage.length || document.getElementById("value"+idx).innerHTML==0) {
+            $("#direction").html("<p>数字の残っている山を指定してください。</p>");
+        } else
+        if (Number.isInteger(Number(dec))==false) {
+            $("#direction").html("<p>減らす数字の指定欄には数字を入力してください。</p>");
+        } else
+        if (Number(dec)<1 || Number(dec)>localStorage.getItem(key)) {
+            $("#direction").html("<p>減らす数字の指定欄には1以上かつ残っている数字以下の数字を入力してください。</p>");
+        };
+    };
+
+    //computerの手
+    function computer() {
+        let idx=0;
+        let dec=0;
+        //grundy数が0の時は数字の残っている山から適当に1だけ減らす（起こらないはず）
+        if (nim()==0) {
+            for (let i = 0; i < localStorage.length; i++) {
+                const key=(i+1)+"個目の山";
+                const value = localStorage.getItem(key);
+                if (value>0) {
+                    idx=i+1;
+                };
+            };
+            dec=1;
+        }
+        //grundy数が0でないときは、削除後0になるように選択させる
+        else {
+            let grundy=nim();
+            let bit=0;
+            let tmp=0;
+            for (let i = 0; i < 50; i++) {
+                if ((grundy>>i)&1==1) {
+                    bit=i
+                    };
+                };
+            for (let i = 0; i<localStorage.length; i++) {
+                const key=(i+1)+"個目の山";
+                const value = localStorage.getItem(key);
+                if ((value>>bit)&1==1) {
+                    idx=i+1;
+                    tmp=value;
+                    grundy^=value;
+                    break
+                    };
+                };
+            dec=tmp-grundy;
+        };
+        document.getElementById("value"+idx).innerHTML-=dec;
+        total-=dec;
+        localStorage.setItem(idx+"個目の山", document.getElementById("value"+idx).innerHTML);
+        $("#direction").append("<p>コンピュータは"+idx+"個目の山を"+dec+"減らしました。</p>");
+    };
+
+    //1.Save クリックイベント
+    $("#save").on("click",function() {
+        const key   = (localStorage.length+1)+"個目の山";
+        const value = $("#memo").val();
+        let textForm = document.getElementById("memo");
+        textForm.value = '';
+        if (Number.isInteger(Number(value)) && value!='' && Number(value)>0) {
+            total += Number(value);
+            localStorage.setItem(key, value);
+            let h= '<tr>';
+                h += '<th>'+key+'</th>';
+                h += '<td id="value'+localStorage.length+'">'+Number(value)+'</td>';
+                h += '</tr>';
+            $("#list").append(h);
+            $("#direction").html("<p>"+(localStorage.length+1)+"個目の山の大きさを指定してください。これ以上山を増やさない場合は「ゲームスタート」のボタンを押してください。</p>");
+        } else {
+            if (localStorage.length>0) {
+                $("#direction").html("<p><u>1以上の数字を入力してください。</u>"+(localStorage.length+1)+"個目の山の大きさを指定してください。これ以上山を増やさない場合は「ゲームスタート」のボタンを押してください。</p>");
+            } else {
+                $("#direction").html("<p><u>1以上の数字を入力してください。</u>"+(localStorage.length+1)+"個目の山の大きさを指定してください。</p>");
+            }
+        };
+    });
+
+    //2.clear クリックイベント
+    $("#clear").on("click", function() {
+        localStorage.clear();
+        $("#list").empty();
+        $("#direction").html("<p>1個目の山の大きさを指定してください。</p>");
+    });
+
+    //4.Nimのスタート
+    $("#start").on("click", function() {
+        if (localStorage.length==0) {
+            $("#direction").html("<p><u>1個以上の山を作成してください。</u>1個目の山の大きさを指定してください。</p>");
+        }
+        else {
+            //不要なボタンを消して、提出ボタンを作る。最初のメッセージを出す。
+            $("#memo").remove();
+            $("#save").remove();
+            $("#clear").remove();
+            $("#start").remove();
+            $("#select").append('<p id="submit">決定</p>');
+            // submit時の処理を入れる
+            $("#submit").on("click", function() {
+                submit();
+            });
+            $("#select").append('<p id="reload">やり直す</p>');
+            // reloadの処理を入れる
+            $("#reload").on("click", function() {
+                location.reload();
+            });
+            $("#direction2").html('<p id="direction2"><input type="text" id="d1">個目の山を<input type="text" id="d2">減らす。</p>')
+            if (nim()==0) {
+                $("#direction").html("<p>あなたが先手です。</p>");
+            }
+            else {
+                $("#direction").html("<p>コンピュータが先手です。</p>");
+                computer();
+                if (total==0) {
+                    $("#direction").append("<p>すべての山の数字が0になったため、あなたの負けです。</p>");
+                    document.getElementById("direction2").innerHTML='';
+                    $("#submit").remove();
+                } else {
+                    $("#direction").append("<p>あなたの番です。</p>");
+                };
+            };
+        };
+    });
+
+    
+
+
+</script>
+<footer>もしNimの必勝法について興味のある方がいれば、<a href="https://manabitimes.jp/math/950">こちら</a>をご覧ください（多分あんまり面白くないです）。アルゴリズムはこれを実装しているだけです。</footer>
+</body>
+</html>

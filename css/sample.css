@@ -1,0 +1,90 @@
+body{
+    margin:0;
+    padding:0;
+    text-align:left;
+    font-size: 32px;
+    width:80%;
+    margin-left: auto;
+    margin-right: auto;
+    background-image: url("../img/white_bgi.jpg");
+}
+header{
+    border-bottom: 1px solid #ccc;
+    font-size: 50px;
+    text-align: center;
+}
+h1{
+    font-size: 100%;
+}
+h2{
+    font-size: 90%;
+    margin-top: 50px;
+    text-align: center;
+}
+main{
+    width:100%;
+    display: block;
+    position:relative;
+}
+footer{
+    font-size: 60%;
+    text-align: center;
+    margin-bottom: 20px;
+}
+p{
+    font-size:80%;
+    text-align: left;
+    margin : 0;
+}
+ul{
+    padding: 0;
+    /* display:table;  定義 */
+    /* table-layout: fixed; */
+    width:96%;
+    font-size: 80%;
+    margin: 0 3%;
+}
+#play {
+    margin-right: auto;
+    margin-left: auto;
+    width: 50%;
+}
+#select {
+    display: table;
+    justify-content: space-around;
+}
+#select p{
+    list-style-type:none;
+    border: 1px solid #666;
+    background-color: #fff;
+    cursor: pointer;
+    color:#0d7dfd;
+    text-align: center;
+    width: 200px;
+    display: table-cell;
+    vertical-align: middle;
+}
+#select p:hover{
+    background: #0d7dfd;
+    color:#fff;
+    text-align: center;
+}
+table{
+    margin: 20px auto;
+    border:1px solid #8dc3f5;
+    width:20%;
+}
+th{
+    width:70%;
+    font-size:80%;
+    background-color:#d0e7fc;
+}
+td{
+    font-size:80%;
+    text-align: right;
+    background-color:rgb(241, 239, 239);
+}
+input {
+    width: 50px;
+    height: 30px;
+}
